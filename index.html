@@ -1,0 +1,82 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>La Tierra gira al hacer click</title>
+</head>
+<body>
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.175.0/build/three.module.js';
+
+    let scene, camera, renderer, tierra, nubes;
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+    let earthRotationSpeed = 0.01;
+
+    init();
+    animate();
+
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(
+        45, window.innerWidth / window.innerHeight, 0.1, 1000
+      );
+      camera.position.z = 10;
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 3, 5);
+      scene.add(directionalLight);
+
+      const textureLoader = new THREE.TextureLoader();
+
+      const earthTexture = textureLoader.load('./textures/map.jpg');
+
+      const cloudTexture = textureLoader.load('./textures/fair_clouds_4k.png');
+
+      const sphereGeometry = new THREE.SphereGeometry(2, 64, 64);
+
+      const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
+      tierra = new THREE.Mesh(sphereGeometry, earthMaterial);
+      tierra.name = 'earth';
+      scene.add(tierra);
+
+      const cloudMaterial = new THREE.MeshPhongMaterial({
+        map: cloudTexture,
+        transparent: true,
+        depthWrite: false,
+      });
+      const cloudGeometry = new THREE.SphereGeometry(2.03, 64, 64);
+      nubes = new THREE.Mesh(cloudGeometry, cloudMaterial);
+      scene.add(nubes);
+      window.addEventListener('mousedown', onMouseDown, false);
+    }
+    
+    function onMouseDown(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(scene.children);
+      for (let i = 0; i < intersects.length; i++) {
+        if (intersects[i].object.name === 'earth') {
+          earthRotationSpeed += 0.01;
+          console.log('¡Haz hecho clic en la Tierra!');
+        }
+      }
+    }
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      tierra.rotation.y += earthRotationSpeed;
+      nubes.rotation.y += earthRotationSpeed * 1.05;
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>
